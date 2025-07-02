@@ -1,254 +1,309 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Employee Tracker UI</title>
-<style>
-  body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
-  label, select, input, button { display: block; margin: 10px 0; }
-  select, input { width: 100%; padding: 8px; }
-  button { padding: 10px; }
-  #results { margin-top: 20px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-  th { background: #eee; }
-</style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Employee Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .section { margin-bottom: 30px; padding: 20px; border-radius: 8px; background: #f8f9fa; }
+        h2 { margin-top: 0; color: #2c3e50; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #2980b9; }
+        button.danger { background: #e74c3c; }
+        button.danger:hover { background: #c0392b; }
+        #results { margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+        .error { color: #e74c3c; margin: 10px 0; }
+        .success { color: #27ae60; margin: 10px 0; }
+    </style>
 </head>
 <body>
+    <h1>Employee Management System</h1>
 
-<h2>Add Employee</h2>
-<form id="addEmployeeForm">
-  <label>First Name: <input type="text" id="firstName" required /></label>
-  <label>Middle Name: <input type="text" id="middleName" /></label>
-  <label>Last Name: <input type="text" id="lastName" required /></label>
-  <label>Position: <input type="text" id="position" required /></label>
-  <label>Company:
-    <select id="companySelect" required>
-      <option value="">-- Select Company --</option>
-    </select>
-  </label>
-  <label>Site:
-    <select id="siteSelect" required>
-      <option value="">-- Select Site --</option>
-    </select>
-  </label>
-  <button type="submit">Add Employee</button>
-</form>
+    <div class="section">
+        <h2>Add Employee</h2>
+        <form id="addEmployeeForm">
+            <label for="firstName">First Name:</label>
+            <input type="text" id="firstName" required />
+            
+            <label for="middleName">Middle Name:</label>
+            <input type="text" id="middleName" />
+            
+            <label for="lastName">Last Name:</label>
+            <input type="text" id="lastName" required />
+            
+            <label for="position">Position:</label>
+            <input type="text" id="position" required />
+            
+            <label for="companySelect">Company:</label>
+            <select id="companySelect" required>
+                <option value="">-- Select Company --</option>
+            </select>
+            
+            <label for="siteSelect">Site:</label>
+            <select id="siteSelect" required>
+                <option value="">-- Select Site --</option>
+            </select>
+            
+            <button type="submit">Add Employee</button>
+            <div id="addEmployeeMessage" class="message"></div>
+        </form>
+    </div>
 
-<hr />
+    <div class="section">
+        <h2>Remove Employee</h2>
+        <form id="removeEmployeeForm">
+            <label for="removeId">Employee ID to remove:</label>
+            <input type="number" id="removeId" required />
+            
+            <button type="submit" class="danger">Remove Employee</button>
+            <div id="removeEmployeeMessage" class="message"></div>
+        </form>
+    </div>
 
-<h2>Remove Employee</h2>
-<form id="removeEmployeeForm">
-  <label>Employee ID to remove: <input type="number" id="removeId" required /></label>
-  <button type="submit">Remove Employee</button>
-</form>
+    <div class="section">
+        <h2>Retrieve Employees</h2>
+        <div class="filter-section">
+            <label for="filterCompanySelect">By Company:</label>
+            <select id="filterCompanySelect">
+                <option value="">-- Select Company --</option>
+            </select>
+            <button id="getByCompanyBtn">Get Employees</button>
+        </div>
+        
+        <div class="filter-section" style="margin-top: 15px;">
+            <label for="filterSiteSelect">By Site:</label>
+            <select id="filterSiteSelect">
+                <option value="">-- Select Site --</option>
+            </select>
+            <button id="getBySiteBtn">Get Employees</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
 
-<hr />
+    <script>
+        // Configuration
+        const apiBase = window.location.origin; // Use current origin for API calls
+        
+        // Data models
+        const companies = [
+            { id: 1, name: 'INNO' },
+            { id: 2, name: 'SRLH' },
+            { id: 3, name: 'CORELINK' },
+            { id: 4, name: 'HBLX' }
+        ];
 
-<h2>Retrieve Employees</h2>
-<label>By Company:
-  <select id="filterCompanySelect">
-    <option value="">-- Select Company --</option>
-  </select>
-  <button id="getByCompanyBtn">Get Employees</button>
-</label>
+        const sites = [
+            { id: 1, company_id: 1, name: 'Head' },
+            { id: 2, company_id: 1, name: 'Koye' },
+            { id: 3, company_id: 1, name: 'Kilinto' },
+            { id: 4, company_id: 1, name: 'Bole Lemi' },
+            { id: 5, company_id: 1, name: 'Gelan' },
+            { id: 6, company_id: 1, name: 'Sebeta' },
+            { id: 7, company_id: 2, name: 'Head' },
+            { id: 8, company_id: 2, name: 'Debrebrihan' },
+            { id: 9, company_id: 3, name: 'Head' },
+            { id: 10, company_id: 3, name: 'Kilinto' },
+            { id: 11, company_id: 4, name: 'Head' }
+        ];
 
-<label>By Site:
-  <select id="filterSiteSelect">
-    <option value="">-- Select Site --</option>
-  </select>
-  <button id="getBySiteBtn">Get Employees</button>
-</label>
+        // DOM Ready
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeSelects();
+            setupEventListeners();
+        });
 
-<div id="results"></div>
+        function initializeSelects() {
+            fillSelect(document.getElementById('companySelect'), companies);
+            fillSelect(document.getElementById('filterCompanySelect'), companies);
+            document.getElementById('companySelect').dispatchEvent(new Event('change'));
+        }
 
-<script>
-// Static companies and sites (must match your DB data)
-const companies = [
-  { id: 1, name: 'INNO' },
-  { id: 2, name: 'SRLH' },
-  { id: 3, name: 'CORELINK' },
-  { id: 4, name: 'HBLX' },
-];
+        function fillSelect(selectElement, items) {
+            selectElement.innerHTML = '<option value="">-- Select --</option>';
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.name;
+                selectElement.appendChild(option);
+            });
+        }
 
-const sites = [
-  { id: 1, company_id: 1, name: 'Head' },
-  { id: 2, company_id: 1, name: 'Koye' },
-  { id: 3, company_id: 1, name: 'Kilinto' },
-  { id: 4, company_id: 1, name: 'Bole Lemi' },
-  { id: 5, company_id: 1, name: 'Gelan' },
-  { id: 6, company_id: 1, name: 'Sebeta' },
+        function setupEventListeners() {
+            // Company change updates sites
+            document.getElementById('companySelect').addEventListener('change', function() {
+                updateSites(this.value, 'siteSelect');
+            });
+            
+            document.getElementById('filterCompanySelect').addEventListener('change', function() {
+                updateSites(this.value, 'filterSiteSelect');
+            });
 
-  { id: 7, company_id: 2, name: 'Head' },
-  { id: 8, company_id: 2, name: 'Debrebrihan' },
+            // Form submissions
+            document.getElementById('addEmployeeForm').addEventListener('submit', handleAddEmployee);
+            document.getElementById('removeEmployeeForm').addEventListener('submit', handleRemoveEmployee);
+            
+            // Filter buttons
+            document.getElementById('getByCompanyBtn').addEventListener('click', () => {
+                const companyId = document.getElementById('filterCompanySelect').value;
+                if (companyId) fetchEmployees('by-company', companyId);
+            });
+            
+            document.getElementById('getBySiteBtn').addEventListener('click', () => {
+                const siteId = document.getElementById('filterSiteSelect').value;
+                if (siteId) fetchEmployees('by-site', siteId);
+            });
+        }
 
-  { id: 9, company_id: 3, name: 'Head' },
-  { id: 10, company_id: 3, name: 'Kilinto' },
+        function updateSites(companyId, targetSelectId) {
+            const selectElement = document.getElementById(targetSelectId);
+            selectElement.innerHTML = '<option value="">-- Select Site --</option>';
+            
+            if (!companyId) return;
+            
+            const filteredSites = sites.filter(site => site.company_id == companyId);
+            filteredSites.forEach(site => {
+                const option = document.createElement('option');
+                option.value = site.id;
+                option.textContent = site.name;
+                selectElement.appendChild(option);
+            });
+        }
 
-  { id: 11, company_id: 4, name: 'Head' }
-];
+        async function handleAddEmployee(e) {
+            e.preventDefault();
+            const messageElement = document.getElementById('addEmployeeMessage');
+            messageElement.textContent = '';
+            messageElement.className = 'message';
+            
+            try {
+                const employeeData = {
+                    first_name: document.getElementById('firstName').value.trim(),
+                    middle_name: document.getElementById('middleName').value.trim(),
+                    last_name: document.getElementById('lastName').value.trim(),
+                    position: document.getElementById('position').value.trim(),
+                    company_id: parseInt(document.getElementById('companySelect').value),
+                    site_id: parseInt(document.getElementById('siteSelect').value)
+                };
 
-const apiBase = 'https://backendfw2.onrender.com';
+                // Validate
+                if (!employeeData.company_id || !employeeData.site_id) {
+                    throw new Error('Please select both company and site');
+                }
 
-// Populate company selects
-function fillCompanySelect(selectElem) {
-  selectElem.innerHTML = '<option value="">-- Select Company --</option>';
-  companies.forEach(c => {
-    const option = document.createElement('option');
-    option.value = c.id;
-    option.textContent = c.name;
-    selectElem.appendChild(option);
-  });
-}
+                const response = await fetch(`${apiBase}/add-employee`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(employeeData)
+                });
 
-// Populate site select filtered by company
-function fillSiteSelect(siteSelect, companyId) {
-  siteSelect.innerHTML = '<option value="">-- Select Site --</option>';
-  sites.filter(s => s.company_id == companyId)
-       .forEach(s => {
-         const option = document.createElement('option');
-         option.value = s.id;
-         option.textContent = s.name;
-         siteSelect.appendChild(option);
-       });
-}
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to add employee');
+                }
 
-// When company changes in add employee form, update sites
-document.getElementById('companySelect').addEventListener('change', function() {
-  fillSiteSelect(document.getElementById('siteSelect'), this.value);
-});
+                showMessage(messageElement, 'Employee added successfully!', 'success');
+                e.target.reset();
+            } catch (error) {
+                showMessage(messageElement, error.message, 'error');
+                console.error('Add employee error:', error);
+            }
+        }
 
-// When company changes in filter company, update filter sites
-document.getElementById('filterCompanySelect').addEventListener('change', function() {
-  fillSiteSelect(document.getElementById('filterSiteSelect'), this.value);
-});
+        async function handleRemoveEmployee(e) {
+            e.preventDefault();
+            const messageElement = document.getElementById('removeEmployeeMessage');
+            messageElement.textContent = '';
+            messageElement.className = 'message';
+            
+            try {
+                const employeeId = document.getElementById('removeId').value;
+                if (!employeeId) throw new Error('Please enter an employee ID');
 
-// Initialize company selects on page load
-fillCompanySelect(document.getElementById('companySelect'));
-fillCompanySelect(document.getElementById('filterCompanySelect'));
+                const response = await fetch(`${apiBase}/remove-employee`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: parseInt(employeeId) })
+                });
 
-// Add Employee form submit
-document.getElementById('addEmployeeForm').addEventListener('submit', async e => {
-  e.preventDefault();
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to remove employee');
+                }
 
-  const first_name = document.getElementById('firstName').value.trim();
-  const middle_name = document.getElementById('middleName').value.trim();
-  const last_name = document.getElementById('lastName').value.trim();
-  const position = document.getElementById('position').value.trim();
-  const company_id = parseInt(document.getElementById('companySelect').value);
-  const site_id = parseInt(document.getElementById('siteSelect').value);
+                showMessage(messageElement, 'Employee removed successfully!', 'success');
+                e.target.reset();
+                document.getElementById('results').innerHTML = '';
+            } catch (error) {
+                showMessage(messageElement, error.message, 'error');
+                console.error('Remove employee error:', error);
+            }
+        }
 
-  if (!company_id || !site_id) {
-    alert('Please select both company and site');
-    return;
-  }
+        async function fetchEmployees(filterType, filterId) {
+            try {
+                const response = await fetch(`${apiBase}/employees/${filterType}/${filterId}`);
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+                const employees = await response.json();
+                displayEmployees(employees);
+            } catch (error) {
+                document.getElementById('results').innerHTML = 
+                    `<div class="error">Error: ${error.message}</div>`;
+                console.error('Fetch employees error:', error);
+            }
+        }
 
-  try {
-    const res = await fetch(`${apiBase}/add-employee`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ first_name, middle_name, last_name, position, company_id, site_id })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      alert('Employee added successfully');
-      e.target.reset();
-    } else {
-      alert('Error: ' + data.detail);
-    }
-  } catch (err) {
-    alert('Failed to add employee: ' + err.message);
-  }
-});
+        function displayEmployees(employees) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (!employees || employees.length === 0) {
+                resultsDiv.innerHTML = '<div class="message">No employees found</div>';
+                return;
+            }
 
-// Remove Employee form submit
-document.getElementById('removeEmployeeForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const id = parseInt(document.getElementById('removeId').value);
-  if (!id) {
-    alert('Please enter a valid employee ID');
-    return;
-  }
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Position</th>
+                            <th>Company</th>
+                            <th>Site</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
-  try {
-    const res = await fetch(`${apiBase}/remove-employee`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      alert('Employee removed successfully');
-      e.target.reset();
-      clearResults();
-    } else {
-      alert('Error: ' + data.detail);
-    }
-  } catch (err) {
-    alert('Failed to remove employee: ' + err.message);
-  }
-});
+            employees.forEach(emp => {
+                const fullName = `${emp.first_name} ${emp.middle_name ? emp.middle_name + ' ' : ''}${emp.last_name}`;
+                html += `
+                    <tr>
+                        <td>${emp.id}</td>
+                        <td>${fullName}</td>
+                        <td>${emp.position}</td>
+                        <td>${emp.company_name}</td>
+                        <td>${emp.site_name}</td>
+                    </tr>
+                `;
+            });
 
-function clearResults() {
-  document.getElementById('results').innerHTML = '';
-}
+            html += `</tbody></table>`;
+            resultsDiv.innerHTML = html;
+        }
 
-// Display employees in table format
-function displayEmployees(employees) {
-  if (!employees.length) {
-    document.getElementById('results').innerHTML = '<p>No employees found.</p>';
-    return;
-  }
-
-  let html = '<table><thead><tr><th>ID</th><th>Full Name</th><th>Position</th><th>Company</th><th>Site</th></tr></thead><tbody>';
-  employees.forEach(emp => {
-    const fullName = [emp.first_name, emp.middle_name, emp.last_name].filter(Boolean).join(' ');
-    html += `<tr>
-      <td>${emp.id}</td>
-      <td>${fullName}</td>
-      <td>${emp.position}</td>
-      <td>${emp.company_name}</td>
-      <td>${emp.site_name}</td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  document.getElementById('results').innerHTML = html;
-}
-
-// Get employees by company
-document.getElementById('getByCompanyBtn').addEventListener('click', async () => {
-  const companyId = parseInt(document.getElementById('filterCompanySelect').value);
-  if (!companyId) {
-    alert('Please select a company');
-    return;
-  }
-
-  try {
-    const res = await fetch(`${apiBase}/employees/by-company/${companyId}`);
-    const data = await res.json();
-    displayEmployees(data);
-  } catch (err) {
-    alert('Failed to get employees: ' + err.message);
-  }
-});
-
-// Get employees by site
-document.getElementById('getBySiteBtn').addEventListener('click', async () => {
-  const siteId = parseInt(document.getElementById('filterSiteSelect').value);
-  if (!siteId) {
-    alert('Please select a site');
-    return;
-  }
-
-  try {
-    const res = await fetch(`${apiBase}/employees/by-site/${siteId}`);
-    const data = await res.json();
-    displayEmployees(data);
-  } catch (err) {
-    alert('Failed to get employees: ' + err.message);
-  }
-});
-</script>
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = `message ${type}`;
+        }
+    </script>
 </body>
 </html>
